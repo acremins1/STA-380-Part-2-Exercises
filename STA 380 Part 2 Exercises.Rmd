@@ -1,0 +1,184 @@
+---
+title: 'STA 380 Part 2: Exercises'
+author: "Aidan Cremins"
+date: '2022-07-29'
+output: pdf_document
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(forcats)
+```
+
+
+# Probability Practice
+
+### Part a.
+
+P(Y) = 0.65
+P(N) = 0.35
+P(RC) = 0.3
+P(TC) = 0.7 (P(RC)-1)
+P(Y|RC) = 0.5
+P(N|RC) = 0.5
+
+We're looking for P(Y|TC) so we can use the rule of total probability:
+
+P(Y) = P(Y, TC) + P(Y, RC) = P(TC) * P(Y|TC) + P(RC) * P(Y|RC)
+
+We know all of these inputs to the equation except for P(Y|TC), so we want to solve for that unknown.
+
+0.65 = 0.7 * P(Y|TC) + 0.3 * 0.5
+
+From the above equation, we find that P(Y|TC) $\approx$ 0.714286. This means that truthful clickers answer yes to the question about 71.43% of the time.
+
+$\frac{P(Y)*P(TC|Y)}{P(Yes)*P(TC|Y)+P(No)*P(RC|Y)}$
+
+$\frac{0.65*0.5}{.7*0.5+0.3*0.5}$
+
+### Part b.
+
+P(Positive|Disease) = .993
+P(Negative|No Disease) = 0.9999
+P(Disease) = 0.000025
+P(No Disease) = 0.999975 (1-0.000025)
+
+We're looking for P(Disease|Positive) so we can use Baye's Law:
+
+$\frac{P(Disease)*P(Positive|Disease)}{P(Disease)*P(Positive|Disease)+P(No Disease)*P(Positive|No Disease)}$
+
+We have almost all of the inputs that we need, however, we're missing P(Positive|No Disease). These are false positives. We can find the missing probability by taking 1 - true negatives, or 1 - 0.9999 to get P(Positive|No Disease) as 0.0001. Now we can solve for P(Disease|Positive).
+
+$\frac{0.000025*0.993}{0.000025*0.993+0.999975*0.0001}$ $\approx$ .198882. Thus, if someone tests positive, they have about a 19.89% chance of actually having the disease.
+
+# Wrangling the Billboard Top 100
+
+```{r}
+billboard = read.csv("billboard.csv")
+```
+
+#Need a caption - probably something about how most are recent songs
+
+### Part a.
+
+```{r}
+billboard %>%
+  group_by(performer, song) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  head(10)
+```
+
+### Part b.
+
+```{r}
+musical_diversity = billboard %>%
+  filter(year != 1958 & year != 2021) %>%
+  group_by(year) %>%
+  summarize(unique_songs_per_year = length(unique(c(performer,song))))
+
+ggplot(musical_diversity) + geom_line(aes(x = year, y = unique_songs_per_year))
+```
+
+### Part c.
+
+```{r}
+ten_week_hit_songs <- billboard %>%
+  group_by(performer,song) %>%
+  summarize(ten_week_hit = ifelse(n()>=10,"Yes","No")) %>%
+  filter(ten_week_hit == "Yes")
+
+top_artists <- ten_week_hit_songs %>%
+  group_by(performer) %>%
+  summarize(num_ten_week_hit = n()) %>%
+  filter(num_ten_week_hit>=30)
+
+ggplot(top_artists) + geom_bar(aes(x = fct_reorder(performer,num_ten_week_hit), y = num_ten_week_hit),stat = "identity") + coord_flip()
+```
+
+#Visual story telling part 1: green buildings
+
+```{r}
+green_buildings = read.csv("greenbuildings.csv")
+```
+
+```{r}
+ggplot(green_buildings, aes(x = Rent)) + geom_histogram() + facet_grid(.~green_rating)
+```
+
+Green buildings tend to be newer, "newness" could justify higher rents
+```{r}
+ggplot(green_buildings, aes(x = green_rating, y = age ,group = green_rating)) + geom_boxplot()
+```
+
+```{r}
+ggplot(green_buildings, aes(x = age, y = Rent)) + geom_line() + facet_grid(. ~ green_rating)
+```
+
+# Visual story telling part 2: Cap Metro data
+
+```{r}
+cap_metro <- read.csv("capmetro_UT.csv")
+```
+```{r}
+cap_metro$time_of_day = ifelse(cap_metro$hour_of_day %in% c(6,7,8,9,10,11),"Morning",ifelse(cap_metro$hour_of_day %in% c(12,13,14,15,16),"Afternoon","Evening"))
+time_of_day_order <- c("Morning","Afternoon","Evening")
+cap_metro$activity = cap_metro$boarding + cap_metro$alighting
+ggplot(cap_metro, aes(x = factor(time_of_day,levels=time_of_day_order), y = activity)) + geom_bar(stat="identity") + facet_grid(. ~ weekend)
+```
+
+Activity seems to slightly increase as temperature increases, adjusted for the difference in ridership between weekdays and weekends
+```{r}
+riders_temp = cap_metro %>%
+  group_by(timestamp) %>%
+  summarize(total_riders = sum(activity), mean_temp = mean(temperature), weekend = weekend)
+ggplot(riders_temp, aes(x = mean_temp, y = total_riders)) + geom_line()+facet_grid(.~weekend)
+```
+
+#Clustering and PCA
+
+```{r}
+wine <- read.csv("wine.csv")
+```
+
+```{r}
+set.seed(1)
+wine_quant <- wine[,! names(wine) %in% c("color","quality")]
+wine_pca = prcomp(wine_quant, rank=10, scale=TRUE)
+boxplot(wine_pca$x[,1],as.factor(wine$color))
+```
+
+Cluster 1 is mostly red wines, whereas Cluster 2 is mostly white wines. Even just making two clusters distinguishes between the two wine colors very well. 
+```{r}
+set.seed(1)
+library(knitr)
+wine_quant_scaled <- scale(wine_quant)
+wine_clusters <- kmeans(wine_quant_scaled, centers=2, nstart=50)
+table(wine_clusters$cluster,wine$color)
+```
+
+While the 2 clusters separated out the two wine colors well, they don't seem to distinguish between wine quality because the median quality is essentially the same for both clusters. Even if we increase the number of clusters pretty dramatically up to 10, there still doesn't appear to be major quality differences between the boxplots.
+```{r}
+wine$cluster = as.factor(wine_clusters$cluster)
+ggplot(wine, aes(x = cluster, y = quality)) + geom_boxplot()
+```
+
+#Market Segmentation
+
+```{r}
+set.seed(1)
+library(reshape2)
+social_mark <- read.csv("social_marketing.csv")
+social_mark_quant <- social_mark[,! names(social_mark) %in% "X"]
+social_mark_quant_scaled <- scale(social_mark_quant)
+social_mark_clusters <- kmeans(social_mark_quant_scaled, centers=10, nstart=50)
+social_mark$cluster <- social_mark_clusters$cluster
+cluster_means <- aggregate(social_mark[, 2:36], by=list(social_mark$cluster), mean)
+cluster_means <- melt(cluster_means,id="Group.1")
+cluster_means <- cluster_means %>% 
+  group_by(Group.1) %>%
+  arrange(desc(value)) %>% 
+  slice(1:10)
+cluster_means
+```
