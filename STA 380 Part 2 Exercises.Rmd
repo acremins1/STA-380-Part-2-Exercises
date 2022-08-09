@@ -2,7 +2,7 @@
 title: 'STA 380 Part 2: Exercises'
 author: "Aidan Cremins"
 date: '2022-07-29'
-output: pdf_document
+output: rmarkdown::github_document
 ---
 
 ```{r}
@@ -136,7 +136,7 @@ riders_temp = cap_metro %>%
 ggplot(riders_temp, aes(x = mean_temp, y = total_riders)) + geom_line()+facet_grid(.~weekend)
 ```
 
-#Clustering and PCA
+# Clustering and PCA
 
 ```{r}
 wine <- read.csv("wine.csv")
@@ -164,7 +164,7 @@ wine$cluster = as.factor(wine_clusters$cluster)
 ggplot(wine, aes(x = cluster, y = quality)) + geom_boxplot()
 ```
 
-#Market Segmentation
+# Market Segmentation
 
 ```{r}
 set.seed(1)
