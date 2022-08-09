@@ -71,7 +71,7 @@ chance of actually having the disease.
 # Wrangling the Billboard Top 100
 
 ``` r
-billboard = read.csv("billboard.csv")
+billboard = read.csv("data/billboard.csv")
 ```
 
 \#Need a caption - probably something about how most are recent songs
@@ -143,7 +143,7 @@ ggplot(top_artists) + geom_bar(aes(x = fct_reorder(performer,num_ten_week_hit), 
 \#Visual story telling part 1: green buildings
 
 ``` r
-green_buildings = read.csv("greenbuildings.csv")
+green_buildings = read.csv("data/greenbuildings.csv")
 ```
 
 ``` r
@@ -171,7 +171,7 @@ ggplot(green_buildings, aes(x = age, y = Rent)) + geom_line() + facet_grid(. ~ g
 # Visual story telling part 2: Cap Metro data
 
 ``` r
-cap_metro <- read.csv("capmetro_UT.csv")
+cap_metro <- read.csv("data/capmetro_UT.csv")
 ```
 
 ``` r
@@ -195,10 +195,10 @@ ggplot(riders_temp, aes(x = mean_temp, y = total_riders)) + geom_line()+facet_gr
 
 ![](STA-380-Part-2-Exercises_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
-\#Clustering and PCA
+# Clustering and PCA
 
 ``` r
-wine <- read.csv("wine.csv")
+wine <- read.csv("data/wine.csv")
 ```
 
 ``` r
@@ -240,12 +240,12 @@ ggplot(wine, aes(x = cluster, y = quality)) + geom_boxplot()
 
 ![](STA-380-Part-2-Exercises_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
-\#Market Segmentation
+# Market Segmentation
 
 ``` r
 set.seed(1)
 library(reshape2)
-social_mark <- read.csv("social_marketing.csv")
+social_mark <- read.csv("data/social_marketing.csv")
 social_mark_quant <- social_mark[,! names(social_mark) %in% "X"]
 social_mark_quant_scaled <- scale(social_mark_quant)
 social_mark_clusters <- kmeans(social_mark_quant_scaled, centers=10, nstart=50)
@@ -274,3 +274,9 @@ cluster_means
     ##  9       1 shopping          1.28
     ## 10       1 travel            1.23
     ## # … with 90 more rows
+
+# The Reuters Corpus
+
+**Figure out how to download this data** - For now, just clone the
+Github and copy the folder over; I’ve added it to .gitignore so it won’t
+be pushed to Github
