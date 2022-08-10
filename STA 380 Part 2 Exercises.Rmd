@@ -1,6 +1,6 @@
 ---
 title: 'STA 380 Part 2: Exercises'
-author: "Aidan Cremins"
+author: "Aidan Cremins, Peyton Lewis, Joe Morris, Amrit Sandhu"
 date: '2022-07-29'
 output: rmarkdown::github_document
 ---
@@ -164,24 +164,50 @@ wine$cluster = as.factor(wine_clusters$cluster)
 ggplot(wine, aes(x = cluster, y = quality)) + geom_boxplot()
 ```
 
-# Market Segmentation
+#Market Segmentation
 
-```{r}
+We decided to define market segments for this problem as clusters identified through the k-means clustering approach. We omitted the Twitter user's randomly generated ID when creating the clusters and instead only used the scores for each Tweet interest. We settled on creating 10 market segments (clusters) as 10 seemed to be a sweet spot between capturing legitimate differences between Twitter followers while also not overloading the company with too many market segments to try to understand.
+
+```{r,include=FALSE}
+#Set seed so we have reproducible results
 set.seed(1)
-library(reshape2)
-social_mark <- read.csv("data/social_marketing.csv")
+#Read in data
+social_mark <- read.csv("social_marketing.csv")
+#Drop the "X" column because we don't want to use the Twitter user ID in creating market segment clusters
 social_mark_quant <- social_mark[,! names(social_mark) %in% "X"]
+#Scale the other variables before doing kmeans clustering
 social_mark_quant_scaled <- scale(social_mark_quant)
+#Run kmeans, finding 10 clusters which we thought was a reasonably number of market segments to examine
 social_mark_clusters <- kmeans(social_mark_quant_scaled, centers=10, nstart=50)
+#Add each row's assigned cluster back to the original data frame
 social_mark$cluster <- social_mark_clusters$cluster
-cluster_means <- aggregate(social_mark[, 2:36], by=list(social_mark$cluster), mean)
-cluster_means <- melt(cluster_means,id="Group.1")
-cluster_means <- cluster_means %>% 
+#For each of the clusters, get the average score for each interest category
+mkt_segments <- aggregate(social_mark[, 2:36], by=list(social_mark$cluster), mean)
+mkt_segments <- melt(mkt_segments,id="Group.1")
+mkt_segments <- mkt_segments %>% 
   group_by(Group.1) %>%
   arrange(desc(value)) %>% 
   slice(1:10)
-cluster_means
 ```
+
+While NutrientH20 might be interested in all 10 of the market segments that we've identified, they'll likely care the most about the segments that would be most receptive to their products. Thus, we found the 3 market segments with the highest average scores for the "health_nutrition" interest given that NutrientH20 seems to be a health-oriented company. The summaries of the three segments are below:
+
+```{r,echo=FALSE}
+#Extract only the scores for the health_nutrition interest
+health_scores <- subset(mkt_segments, mkt_segments$variable=="health_nutrition")
+#Get the top 3 average health_nutrition scores
+top_health_scores <- subset(health_scores, value %in% tail(sort(value),3))
+#Get the clusters corresponding to the top 3 average health_nutrition scores
+top_health_clusters <- subset(mkt_segments, value %in% top_health_scores$value)
+#Display all scores for these 3 clusters with the highest health_nutrition scores
+top_health_clusters <- subset(mkt_segments, Group.1 %in%
+top_health_clusters$Group.1)
+colnames(top_health_clusters) = c("Market Segment","Interest Category","Average Score")
+top_health_clusters <- as.data.frame(top_health_clusters)
+top_health_clusters
+```
+
+From the three most promising market segments, the first one appears to be the most appealing to NutrientH20. Members of this segment have by far the highest average scores for the "health_nutrition" interst category, and also have high average scores for "fitness" which probably is something closely related to what NutrientH20 does as well. There are 768 Twitter users in the most promising market segment of segment 1, and then 475 and 49 in segments 3 and 4, respectively. Focusing in on these market segment will hopefully yield more future customers than trying to market to all Twitter followers.
 
 # The Reuters Corpus
 
@@ -190,4 +216,45 @@ cluster_means
 
 ```{r}
 
+```
+
+# Association Rule Mining
+
+```{r}
+library(arules)
+library(reshape2)
+#Read in the groceries.txt file. Find max number of objects
+#in a basket so that R doesn't automatically cap the number
+#of columns we can have
+no_col <- max(count.fields("groceries.txt", sep = ","))
+groceries <- read.table("groceries.txt",sep=",",fill=TRUE,col.names=c(1:no_col))
+#Add in a column that indicates which customer corresponds to 
+#the basket (row number)
+groceries$customer = as.factor(1:nrow(groceries))
+#Get data in long format
+groceries <- melt(groceries,id.vars = 'customer') 
+groceries <- as.data.frame(groceries)
+#Drop all values that are blank
+groceries <- subset(groceries, groceries$value != "")
+#Group the grocery products by the customer who bought them
+groceries <- split(x=groceries$value, f=groceries$customer)
+#Make sure each customer is only associated with unique
+#products in their basket
+groceries <- lapply(groceries, unique)
+```
+
+```{r,include=FALSE}
+#Change our data into a "transactions" type variable so that we can supply it to the apriori() function
+groceries_trans <- as(groceries,"transactions")
+#Run the apriori function with values for support, confidence, and maxlen that we played around with until we got a set of rules that we thought were reasonably useful
+groceries_rules <- apriori(groceries_trans, 
+	parameter=list(support=.01, confidence=.4, maxlen=4))
+```
+
+```{r}
+#Export to a graphml file so that we can visualize this data in Gephi
+library(igraph)
+library(arulesViz)
+groceries_graph = associations2igraph(subset(groceries_rules, lift>1), associationsAsNodes = FALSE)
+igraph::write_graph(groceries_graph, file='groceries.graphml', format = "graphml")
 ```
