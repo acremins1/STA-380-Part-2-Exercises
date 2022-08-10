@@ -601,7 +601,7 @@ body {
 <body>
 
 <h1 id="sta-380-part-2-exercises">STA 380 Part 2: Exercises</h1>
-<p>Aidan Cremins 2022-07-29</p>
+<p>Aidan Cremins, Peyton Lewis, Joe Morris, Amrit Sandhu 2022-07-29</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code></pre></div>
 <pre><code>## 
 ## Attaching package: &#39;dplyr&#39;
@@ -747,39 +747,121 @@ appear to be major quality differences between the boxplots.</p>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(wine, <span class="fu">aes</span>(<span class="at">x =</span> cluster, <span class="at">y =</span> quality)) <span class="sc">+</span> <span class="fu">geom_boxplot</span>()</span></code></pre></div>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
 <h1 id="market-segmentation">Market Segmentation</h1>
-<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(reshape2)</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>social_mark <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;data/social_marketing.csv&quot;</span>)</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>social_mark_quant <span class="ot">&lt;-</span> social_mark[,<span class="sc">!</span> <span class="fu">names</span>(social_mark) <span class="sc">%in%</span> <span class="st">&quot;X&quot;</span>]</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>social_mark_quant_scaled <span class="ot">&lt;-</span> <span class="fu">scale</span>(social_mark_quant)</span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>social_mark_clusters <span class="ot">&lt;-</span> <span class="fu">kmeans</span>(social_mark_quant_scaled, <span class="at">centers=</span><span class="dv">10</span>, <span class="at">nstart=</span><span class="dv">50</span>)</span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>social_mark<span class="sc">$</span>cluster <span class="ot">&lt;-</span> social_mark_clusters<span class="sc">$</span>cluster</span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>cluster_means <span class="ot">&lt;-</span> <span class="fu">aggregate</span>(social_mark[, <span class="dv">2</span><span class="sc">:</span><span class="dv">36</span>], <span class="at">by=</span><span class="fu">list</span>(social_mark<span class="sc">$</span>cluster), mean)</span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>cluster_means <span class="ot">&lt;-</span> <span class="fu">melt</span>(cluster_means,<span class="at">id=</span><span class="st">&quot;Group.1&quot;</span>)</span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>cluster_means <span class="ot">&lt;-</span> cluster_means <span class="sc">%&gt;%</span> </span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Group<span class="fl">.1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(value)) <span class="sc">%&gt;%</span> </span>
-<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>)</span>
-<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>cluster_means</span></code></pre></div>
-<pre><code>## # A tibble: 100 × 3
-## # Groups:   Group.1 [10]
-##    Group.1 variable         value
-##      &lt;int&gt; &lt;fct&gt;            &lt;dbl&gt;
-##  1       1 health_nutrition 12.5 
-##  2       1 personal_fitness  6.65
-##  3       1 chatter           3.94
-##  4       1 cooking           3.43
-##  5       1 outdoors          2.88
-##  6       1 photo_sharing     2.40
-##  7       1 food              2.21
-##  8       1 current_events    1.51
-##  9       1 shopping          1.28
-## 10       1 travel            1.23
-## # … with 90 more rows</code></pre>
+<p>We decided to define market segments for this problem as clusters
+identified through the k-means clustering approach. We omitted the
+Twitter user’s randomly generated ID when creating the clusters and
+instead only used the scores for each Tweet interest. We settled on
+creating 10 market segments (clusters) as 10 seemed to be a sweet spot
+between capturing legitimate differences between Twitter followers while
+also not overloading the company with too many market segments to try to
+understand.</p>
+<p>While NutrientH20 might be interested in all 10 of the market
+segments that we’ve identified, they’ll likely care the most about the
+segments that would be most receptive to their products. Thus, we found
+the 3 market segments with the highest average scores for the
+“health_nutrition” interest given that NutrientH20 seems to be a
+health-oriented company. The summaries of the three segments are
+below:</p>
+<pre><code>##    Market Segment Interest Category Average Score
+## 1               1  health_nutrition     12.541667
+## 2               1  personal_fitness      6.651042
+## 3               1           chatter      3.941406
+## 4               1           cooking      3.425781
+## 5               1          outdoors      2.876302
+## 6               1     photo_sharing      2.399740
+## 7               1              food      2.205729
+## 8               1    current_events      1.514323
+## 9               1          shopping      1.283854
+## 10              1            travel      1.229167
+## 11              3           cooking     11.684211
+## 12              3     photo_sharing      6.088421
+## 13              3           fashion      5.985263
+## 14              3           chatter      4.246316
+## 15              3            beauty      4.208421
+## 16              3  health_nutrition      2.269474
+## 17              3          shopping      1.755789
+## 18              3    current_events      1.751579
+## 19              3       college_uni      1.496842
+## 20              3            travel      1.461053
+## 21              4           chatter      4.653061
+## 22              4  health_nutrition      2.795918
+## 23              4     photo_sharing      2.448980
+## 24              4            travel      2.244898
+## 25              4          politics      2.244898
+## 26              4       college_uni      1.918367
+## 27              4     sports_fandom      1.897959
+## 28              4    current_events      1.877551
+## 29              4           cooking      1.795918
+## 30              4  personal_fitness      1.755102</code></pre>
+<p>From the three most promising market segments, the first one appears
+to be the most appealing to NutrientH20. Members of this segment have by
+far the highest average scores for the “health_nutrition” interst
+category, and also have high average scores for “fitness” which probably
+is something closely related to what NutrientH20 does as well. There are
+768 Twitter users in the most promising market segment of segment 1, and
+then 475 and 49 in segments 3 and 4, respectively. Focusing in on these
+market segment will hopefully yield more future customers than trying to
+market to all Twitter followers.</p>
 <h1 id="the-reuters-corpus">The Reuters Corpus</h1>
 <p><strong>Figure out how to download this data</strong> - For now, just
 clone the Github and copy the folder over; I’ve added it to .gitignore
 so it won’t be pushed to Github</p>
+<h1 id="association-rule-mining">Association Rule Mining</h1>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arules)</span></code></pre></div>
+<pre><code>## Loading required package: Matrix
+
+## 
+## Attaching package: &#39;arules&#39;
+
+## The following object is masked from &#39;package:dplyr&#39;:
+## 
+##     recode
+
+## The following objects are masked from &#39;package:base&#39;:
+## 
+##     abbreviate, write</code></pre>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(reshape2)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="co">#Read in the groceries.txt file. Find max number of objects</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="co">#in a basket so that R doesn&#39;t automatically cap the number</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="co">#of columns we can have</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>no_col <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">count.fields</span>(<span class="st">&quot;data/groceries.txt&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;,&quot;</span>))</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>groceries <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">&quot;data/groceries.txt&quot;</span>,<span class="at">sep=</span><span class="st">&quot;,&quot;</span>,<span class="at">fill=</span><span class="cn">TRUE</span>,<span class="at">col.names=</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span>no_col))</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="co">#Add in a column that indicates which customer corresponds to </span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="co">#the basket (row number)</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>groceries<span class="sc">$</span>customer <span class="ot">=</span> <span class="fu">as.factor</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(groceries))</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a><span class="co">#Get data in long format</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>groceries <span class="ot">&lt;-</span> <span class="fu">melt</span>(groceries,<span class="at">id.vars =</span> <span class="st">&#39;customer&#39;</span>) </span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>groceries <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(groceries)</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a><span class="co">#Drop all values that are blank</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>groceries <span class="ot">&lt;-</span> <span class="fu">subset</span>(groceries, groceries<span class="sc">$</span>value <span class="sc">!=</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a><span class="co">#Group the grocery products by the customer who bought them</span></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>groceries <span class="ot">&lt;-</span> <span class="fu">split</span>(<span class="at">x=</span>groceries<span class="sc">$</span>value, <span class="at">f=</span>groceries<span class="sc">$</span>customer)</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a><span class="co">#Make sure each customer is only associated with unique</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a><span class="co">#products in their basket</span></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>groceries <span class="ot">&lt;-</span> <span class="fu">lapply</span>(groceries, unique)</span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Export to a graphml file so that we can visualize this data in Gephi</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(igraph)</span></code></pre></div>
+<pre><code>## 
+## Attaching package: &#39;igraph&#39;
+
+## The following object is masked from &#39;package:arules&#39;:
+## 
+##     union
+
+## The following objects are masked from &#39;package:dplyr&#39;:
+## 
+##     as_data_frame, groups, union
+
+## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     decompose, spectrum
+
+## The following object is masked from &#39;package:base&#39;:
+## 
+##     union</code></pre>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arulesViz)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>groceries_graph <span class="ot">=</span> <span class="fu">associations2igraph</span>(<span class="fu">subset</span>(groceries_rules, lift<span class="sc">&gt;</span><span class="dv">1</span>), <span class="at">associationsAsNodes =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>igraph<span class="sc">::</span><span class="fu">write_graph</span>(groceries_graph, <span class="at">file=</span><span class="st">&#39;groceries.graphml&#39;</span>, <span class="at">format =</span> <span class="st">&quot;graphml&quot;</span>)</span></code></pre></div>
 
 </body>
 </html>

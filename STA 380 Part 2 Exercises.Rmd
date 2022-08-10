@@ -164,15 +164,16 @@ wine$cluster = as.factor(wine_clusters$cluster)
 ggplot(wine, aes(x = cluster, y = quality)) + geom_boxplot()
 ```
 
-#Market Segmentation
+# Market Segmentation
 
 We decided to define market segments for this problem as clusters identified through the k-means clustering approach. We omitted the Twitter user's randomly generated ID when creating the clusters and instead only used the scores for each Tweet interest. We settled on creating 10 market segments (clusters) as 10 seemed to be a sweet spot between capturing legitimate differences between Twitter followers while also not overloading the company with too many market segments to try to understand.
 
 ```{r,include=FALSE}
+library(reshape2)
 #Set seed so we have reproducible results
 set.seed(1)
 #Read in data
-social_mark <- read.csv("social_marketing.csv")
+social_mark <- read.csv("data/social_marketing.csv")
 #Drop the "X" column because we don't want to use the Twitter user ID in creating market segment clusters
 social_mark_quant <- social_mark[,! names(social_mark) %in% "X"]
 #Scale the other variables before doing kmeans clustering
@@ -226,8 +227,8 @@ library(reshape2)
 #Read in the groceries.txt file. Find max number of objects
 #in a basket so that R doesn't automatically cap the number
 #of columns we can have
-no_col <- max(count.fields("groceries.txt", sep = ","))
-groceries <- read.table("groceries.txt",sep=",",fill=TRUE,col.names=c(1:no_col))
+no_col <- max(count.fields("data/groceries.txt", sep = ","))
+groceries <- read.table("data/groceries.txt",sep=",",fill=TRUE,col.names=c(1:no_col))
 #Add in a column that indicates which customer corresponds to 
 #the basket (row number)
 groceries$customer = as.factor(1:nrow(groceries))

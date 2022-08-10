@@ -1,6 +1,6 @@
 STA 380 Part 2: Exercises
 ================
-Aidan Cremins
+Aidan Cremins, Peyton Lewis, Joe Morris, Amrit Sandhu
 2022-07-29
 
 ``` r
@@ -242,41 +242,137 @@ ggplot(wine, aes(x = cluster, y = quality)) + geom_boxplot()
 
 # Market Segmentation
 
-``` r
-set.seed(1)
-library(reshape2)
-social_mark <- read.csv("data/social_marketing.csv")
-social_mark_quant <- social_mark[,! names(social_mark) %in% "X"]
-social_mark_quant_scaled <- scale(social_mark_quant)
-social_mark_clusters <- kmeans(social_mark_quant_scaled, centers=10, nstart=50)
-social_mark$cluster <- social_mark_clusters$cluster
-cluster_means <- aggregate(social_mark[, 2:36], by=list(social_mark$cluster), mean)
-cluster_means <- melt(cluster_means,id="Group.1")
-cluster_means <- cluster_means %>% 
-  group_by(Group.1) %>%
-  arrange(desc(value)) %>% 
-  slice(1:10)
-cluster_means
-```
+We decided to define market segments for this problem as clusters
+identified through the k-means clustering approach. We omitted the
+Twitter user’s randomly generated ID when creating the clusters and
+instead only used the scores for each Tweet interest. We settled on
+creating 10 market segments (clusters) as 10 seemed to be a sweet spot
+between capturing legitimate differences between Twitter followers while
+also not overloading the company with too many market segments to try to
+understand.
 
-    ## # A tibble: 100 × 3
-    ## # Groups:   Group.1 [10]
-    ##    Group.1 variable         value
-    ##      <int> <fct>            <dbl>
-    ##  1       1 health_nutrition 12.5 
-    ##  2       1 personal_fitness  6.65
-    ##  3       1 chatter           3.94
-    ##  4       1 cooking           3.43
-    ##  5       1 outdoors          2.88
-    ##  6       1 photo_sharing     2.40
-    ##  7       1 food              2.21
-    ##  8       1 current_events    1.51
-    ##  9       1 shopping          1.28
-    ## 10       1 travel            1.23
-    ## # … with 90 more rows
+While NutrientH20 might be interested in all 10 of the market segments
+that we’ve identified, they’ll likely care the most about the segments
+that would be most receptive to their products. Thus, we found the 3
+market segments with the highest average scores for the
+“health_nutrition” interest given that NutrientH20 seems to be a
+health-oriented company. The summaries of the three segments are below:
+
+    ##    Market Segment Interest Category Average Score
+    ## 1               1  health_nutrition     12.541667
+    ## 2               1  personal_fitness      6.651042
+    ## 3               1           chatter      3.941406
+    ## 4               1           cooking      3.425781
+    ## 5               1          outdoors      2.876302
+    ## 6               1     photo_sharing      2.399740
+    ## 7               1              food      2.205729
+    ## 8               1    current_events      1.514323
+    ## 9               1          shopping      1.283854
+    ## 10              1            travel      1.229167
+    ## 11              3           cooking     11.684211
+    ## 12              3     photo_sharing      6.088421
+    ## 13              3           fashion      5.985263
+    ## 14              3           chatter      4.246316
+    ## 15              3            beauty      4.208421
+    ## 16              3  health_nutrition      2.269474
+    ## 17              3          shopping      1.755789
+    ## 18              3    current_events      1.751579
+    ## 19              3       college_uni      1.496842
+    ## 20              3            travel      1.461053
+    ## 21              4           chatter      4.653061
+    ## 22              4  health_nutrition      2.795918
+    ## 23              4     photo_sharing      2.448980
+    ## 24              4            travel      2.244898
+    ## 25              4          politics      2.244898
+    ## 26              4       college_uni      1.918367
+    ## 27              4     sports_fandom      1.897959
+    ## 28              4    current_events      1.877551
+    ## 29              4           cooking      1.795918
+    ## 30              4  personal_fitness      1.755102
+
+From the three most promising market segments, the first one appears to
+be the most appealing to NutrientH20. Members of this segment have by
+far the highest average scores for the “health_nutrition” interst
+category, and also have high average scores for “fitness” which probably
+is something closely related to what NutrientH20 does as well. There are
+768 Twitter users in the most promising market segment of segment 1, and
+then 475 and 49 in segments 3 and 4, respectively. Focusing in on these
+market segment will hopefully yield more future customers than trying to
+market to all Twitter followers.
 
 # The Reuters Corpus
 
 **Figure out how to download this data** - For now, just clone the
 Github and copy the folder over; I’ve added it to .gitignore so it won’t
 be pushed to Github
+
+# Association Rule Mining
+
+``` r
+library(arules)
+```
+
+    ## Loading required package: Matrix
+
+    ## 
+    ## Attaching package: 'arules'
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     recode
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     abbreviate, write
+
+``` r
+library(reshape2)
+#Read in the groceries.txt file. Find max number of objects
+#in a basket so that R doesn't automatically cap the number
+#of columns we can have
+no_col <- max(count.fields("data/groceries.txt", sep = ","))
+groceries <- read.table("data/groceries.txt",sep=",",fill=TRUE,col.names=c(1:no_col))
+#Add in a column that indicates which customer corresponds to 
+#the basket (row number)
+groceries$customer = as.factor(1:nrow(groceries))
+#Get data in long format
+groceries <- melt(groceries,id.vars = 'customer') 
+groceries <- as.data.frame(groceries)
+#Drop all values that are blank
+groceries <- subset(groceries, groceries$value != "")
+#Group the grocery products by the customer who bought them
+groceries <- split(x=groceries$value, f=groceries$customer)
+#Make sure each customer is only associated with unique
+#products in their basket
+groceries <- lapply(groceries, unique)
+```
+
+``` r
+#Export to a graphml file so that we can visualize this data in Gephi
+library(igraph)
+```
+
+    ## 
+    ## Attaching package: 'igraph'
+
+    ## The following object is masked from 'package:arules':
+    ## 
+    ##     union
+
+    ## The following objects are masked from 'package:dplyr':
+    ## 
+    ##     as_data_frame, groups, union
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     decompose, spectrum
+
+    ## The following object is masked from 'package:base':
+    ## 
+    ##     union
+
+``` r
+library(arulesViz)
+groceries_graph = associations2igraph(subset(groceries_rules, lift>1), associationsAsNodes = FALSE)
+igraph::write_graph(groceries_graph, file='groceries.graphml', format = "graphml")
+```
