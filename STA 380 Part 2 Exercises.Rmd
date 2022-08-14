@@ -245,9 +245,26 @@ groceries_rules <- apriori(groceries_trans,
 ```
 
 ```{r}
+library(arulesViz)
+interesting_rules <- head(sort(groceries_rules, by="lift"), 10)
+plot(interesting_rules, method="grouped")
+```
+
+```{r}
+itemFrequencyPlot(items(groceries_rules),population=groceries_trans,topN=10,popCol="red")
+```
+
+
+```{r}
+whole_milk_rules <- apriori(groceries_trans, 
+	parameter=list(support=.01, confidence=.4, maxlen=4),appearance = list(default="lhs", rhs="whole milk"))
+length(whole_milk_rules)/length(groceries_rules)
+```
+
+
+```{r}
 #Export to a graphml file so that we can visualize this data in Gephi
 library(igraph)
-library(arulesViz)
 groceries_graph = associations2igraph(subset(groceries_rules, lift>1), associationsAsNodes = FALSE)
 igraph::write_graph(groceries_graph, file='groceries.graphml', format = "graphml")
 ```
