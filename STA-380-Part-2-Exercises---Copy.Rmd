@@ -9,14 +9,16 @@ output:
     df_print: paged
 ---
 
-```{r}
+```{r,include=FALSE}
 library(dplyr)
 library(ggplot2)
 library(forcats)
 library(reshape2)
 library(knitr)
+library(mosaic)
+library(quantmod)
+library(foreach)
 ```
-
 
 # Probability Practice
 
@@ -64,15 +66,13 @@ $\frac{0.000025*0.993}{0.000025*0.993+0.999975*0.0001}$ $\approx$ .198882. Thus,
 
 # Wrangling the Billboard Top 100
 
-```{r}
+```{r,include=FALSE}
 billboard = read.csv("data/billboard.csv")
 ```
 
-#Need a caption - probably something about how most are recent songs
-
 ### Part a.
 
-```{r,include=FALSE}
+```{r,echo=FALSE}
 billboard %>%
   group_by(performer,song) %>%
   summarize(count = n()) %>%
@@ -84,7 +84,7 @@ The table above shows the top 10 longest lasting songs on the Billboard 100. It 
 
 ### Part b.
 
-```{r}
+```{r,echo=FALSE,warnings=FALSE}
 musical_diversity = billboard %>%
   filter(year != 1958 & year != 2021) %>%
   group_by(year) %>%
@@ -299,7 +299,7 @@ ggplot(wine_copy, aes(x = color, y = pc2,group=color)) +geom_boxplot() + xlab("C
 ggplot(wine_copy, aes(x = quality, y = pc2,group=color)) +geom_point() + xlab("Quality") + ylab("Principal Component 2 Score") + ggtitle("Principal Component 2 vs. Quality")
 ```
 
-After thoroughly exploring PCA, we decided to move on to clustering. We used kmeans clustering to create 2 clusters (hopefully one for red wines, and one for white). Our results were promising as Cluster 1 is mostly red wines, whereas Cluster 2 is mostly white wines. Even just making two clusters distinguishes between the two wine colors very well (98.58% of wines were grouped correctly).
+After thoroughly exploring PCA, we decided to move on to clustering. We used k-means clustering to create 2 clusters (hopefully one for red wines, and one for white). Our results were promising as Cluster 1 is mostly red wines, whereas Cluster 2 is mostly white wines. Even just making two clusters distinguishes between the two wine colors very well (98.58% of wines were grouped correctly).
 
 *Figure 7*
 ```{r,echo=FALSE}
@@ -320,27 +320,149 @@ wine$cluster = as.factor(wine_clusters$cluster)
 ggplot(wine, aes(x = cluster, y = quality)) + geom_boxplot() + xlab("Cluster") + ylab("Wine Quality") + ggtitle("Wine Quality vs. Cluster Membership")
 ```
 
-Overall, both PCA and kmeans clustering could pretty easily distinguish red and white wines as shown in Figure 2 and Figure 7. Both methods weren't as good at determining the wine's quality. We think that kmeans clustering is better primarily for ease of interpretation as it gives us one cluster label as opposed to multiple different principal components to try to then interpret their meaning. Additionally, for this data, it seemed as though both PCA and kmeans were equally as effective 
+Overall, both PCA and k-means clustering could pretty easily distinguish red and white wines as shown in Figure 2 and Figure 7. Both methods weren't as good at determining the wine's quality. We think that k-means clustering is better primarily for ease of interpretation as it gives us one cluster label for each wine as opposed to multiple different principal components to try to then interpret their meaning.  
+
+For our portfolio we selected five ETF's.
+
+- ARKK (ARK Innovation) is a fund that invests in companies that are involved in the development of new technologies. (RISKY)
+- QQQ (Invesco QQQ Trust) is a ETF with primarily US tech companies. (RISKY)
+- IWM (iShares Russell 2000 ETF) is a ETF with primarily US small cap companies. (MODERATELY RISKY)
+- SPY (SPDR S&P 500 ETF Trust) is a ETF with primarily US large cap companies. (MODERATELY RISKY)
+- GLD (SPDR Gold Trust) is a ETF with primarily gold. (SAFE)
+
+We tried to make three portfolios:
+
+1. Higher weights in risky ETFs (0.4 ARKK, 0.2 QQQ, 0.15 IWM, 0.15 SPY, 0.1 GLD)
+2. Equally weighted in all ETFs (0.2 ARKK, 0.2 QQQ, 0.2 IWM, 0.2 SPY, 0.2 GLD)
+3. Lower weights in risky ETFs (0.1 ARKK, 0.2 QQQ, 0.2 IWM, 0.2 SPY, 0.3 GLD)
+
+
+Theoretically portfolio (1) should have the highest VAR, followed by (2) and (3).
+For our simulations we used 5000 iterations for each portfolio and daily data from 2017-2022.
+We performed daily rebalancing in all simulations and have reported our VARs at the 95% confidence interval.
+
+Results:
+```{r, echo=FALSE}
+set.seed(1)
+
+# Get our Data --------------------------------------------------------#
+mystocks <- c("ARKK", "QQQ", "IWM", "SPY", "GLD")
+
+myprices <- getSymbols(mystocks, from = "2017-01-01", end = "2022-01-01")
+
+for (ticker in mystocks) {
+    expr <- paste0(ticker, "a = adjustOHLC(", ticker, ")")
+    eval(parse(text = expr))
+}
+
+# Combine all the returns in a matrix
+all_returns <- cbind(ClCl(ARKKa), ClCl(QQQa), ClCl(IWMa), ClCl(SPYa), ClCl(GLDa))
+all_returns <- as.matrix(na.omit(all_returns))
+# ---------------------------------------------------------------------#
+
+# SIMULATION FUNCTION ------------------------------------------------#
+# Make a function to simulate the returns with weight as input
+simulate <- function(weights, n_days, initial_wealth, all_returns) {
+    sim1 <- foreach(i = 1:5000, .combine = "rbind") %do% {
+        total_wealth <- initial_wealth
+        holdings <- weights * total_wealth
+        wealthtracker <- rep(0, n_days)
+        for (today in 1:n_days) {
+            return_today <- resample(all_returns, 1, orig.ids = FALSE)
+            holdings <- holdings + holdings * return_today
+            total_wealth <- sum(holdings)
+            wealthtracker[today] <- total_wealth
+            # Rebalance the portfolio using weights
+            holdings <- weights * total_wealth
+
+        }
+        wealthtracker
+    }
+    return(sim1)
+}
+# ---------------------------------------------------------------------#
+
+
+# RUN SIMULATION -----------------------------------------------------#
+n_days <- 20
+initial_wealth <- 100000
+
+# Simulation 1: Risky weighted more -----------------------#
+weights <- c(0.4, 0.2, 0.15, 0.15, 0.1)
+sim2 <- simulate(weights, n_days, initial_wealth, all_returns)
+# plot normalized histogram
+hist(sim2[, n_days] - initial_wealth, breaks = 30, main = "Risky Portfolio", xlab = "Profit / Loss", ylab = "Frequency") # nolint
+
+# # 5% value at risk:
+percentage_at_risk <- quantile(sim2[, n_days] - initial_wealth, prob = 0.05) / initial_wealth #nolint
+value_at_risk <- quantile(sim2[, n_days] - initial_wealth, prob = 0.05)
+print(paste("The value at risk for 4-weeks of the risky portfolio is ", round(value_at_risk, 2), "USD (", round(percentage_at_risk, 4) * 100, "%)")) #nolint
+# Mean return:
+mean_return <- mean(sim2[, n_days] - initial_wealth) / initial_wealth * 100
+print(paste("The mean return for 4-weeks of the risky portfolio is ", round(mean_return, 4), "%")) #nolint
+
+
+# Simulation 2: Equally weighted portfolio -----------------#
+weights <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+sim1 <- simulate(weights, n_days, initial_wealth, all_returns)
+hist(sim1[, n_days] - initial_wealth, breaks = 30, main = "Equally Weighted Portfolio", xlab = "Profit / Loss", ylab = "Frequency") # nolint
+
+# # 5% value at risk:
+percentage_at_risk <- quantile(sim1[, n_days] - initial_wealth, prob = 0.05) / initial_wealth #nolint
+value_at_risk <- quantile(sim1[, n_days] - initial_wealth, prob = 0.05)
+print(paste("The value at risk for 4-weeks of the equally weighted portfolio is ", round(value_at_risk, 2), "USD (", round(percentage_at_risk, 4) * 100, "%)")) #nolint
+# Mean return:
+mean_return <- mean(sim1[, n_days] - initial_wealth) / initial_wealth * 100
+print(paste("The mean return for 4-weeks of the equally weighted portfolio is ", round(mean_return, 4), "%")) #nolint
+
+
+# Simulation 3: Safe portfolio ----------------------------#
+weights <- c(0.1, 0.15, 0.15, 0.2, 0.4)
+sim3 <- simulate(weights, n_days, initial_wealth, all_returns)
+# Plot histogram with title and axis labels
+hist(sim3[, n_days] - initial_wealth, breaks = 30, main = "Safe Portfolio", xlab = "Profit / Loss", ylab = "Frequency") # nolint
+
+# # 5% value at risk:
+percentage_at_risk <- quantile(sim3[, n_days] - initial_wealth, prob = 0.05) / initial_wealth #nolint
+value_at_risk <- quantile(sim3[, n_days] - initial_wealth, prob = 0.05)
+print(paste("The value at risk for 4-weeks of the safe portfolio is ", round(value_at_risk, 2), "USD (", round(percentage_at_risk, 4) * 100, "%)")) #nolint
+# Mean return:
+mean_return <- mean(sim3[, n_days] - initial_wealth) / initial_wealth * 100
+print(paste("The mean return for 4-weeks of the safe portfolio is ", round(mean_return, 4), "%")) #nolint
+# ---------------------------------------------------------------------#
+```
+
+Comments:
+As expected the Risky Portfolio has the highest value at risk 10.37%, followed by the Equally Weighted portfolio at 8.21%.<br>
+Finally the Safe Portfolio has the lowest value at risk at 6.18%.<br>
+We expected the portfolios with the highest VARs to have the highest returns as well (Risk-Return trade off).
+This does hold true in our simulations with the 14-day mean returns being 1.6022%, 1.2601%, and 1.1514% for the Risky Portfolio, Equally Weighted Portfolio, and the Safe Portfolio respectively.<br>
+<br>
 
 # Market Segmentation
 
-We decided to define market segments for this problem as clusters identified through the k-means clustering approach. We omitted the Twitter user's randomly generated ID when creating the clusters and instead only used the scores for each Tweet interest. We settled on creating 10 market segments (clusters) as 10 seemed to be a sweet spot between capturing legitimate differences between Twitter followers while also not overloading the company with too many market segments to try to understand.
+We started our analysis by looking at total counts of tweets per each tweet category. Among the top tweet categories, there appears to be a recurring theme regarding general health and wellness (health-nutrition, cooking, travel, personal fitness, and food). Given this result, we assumed that NutrientH20 is a "health and wellness" company. This directed our cluster analysis below to enhance NutrientH20's online advertising campaign strategy.
+
+```{r,echo=FALSE}
+#Read in data
+social_mark <- read.csv("social_marketing.csv")
+social_mark_melt <- melt(social_mark)
+interest_totals <- social_mark_melt %>%
+  group_by(variable) %>%
+  summarize(total = sum(value))
+ggplot(interest_totals, aes(x=reorder(variable,total),y=total)) + geom_bar(stat="identity",fill="cornflowerblue")+coord_flip()+xlab("Total Number of Tweets")+ylab("Tweet Category")+ggtitle("Total Number of Tweets per Tweet Category")
+```
+
+We decided to define market segments for this problem as clusters identified through the k-means clustering approach. We omitted the Twitter user's randomly generated ID when creating the clusters and instead only used the scores for each tweet interest area. We settled on creating 10 market segments (clusters) as 10 seemed to be a sweet spot between capturing legitimate differences between Twitter followers while also not overloading the company with too many market segments to try to understand.
 
 ```{r,include=FALSE}
 #Set seed so we have reproducible results
 set.seed(1)
-#Read in data
-social_mark <- read.csv("social_marketing.csv")
-library(reshape2)
-#Set seed so we have reproducible results
-set.seed(1)
-#Read in data
-social_mark <- read.csv("data/social_marketing.csv")
 #Drop the "X" column because we don't want to use the Twitter user ID in creating market segment clusters
 social_mark_quant <- social_mark[,! names(social_mark) %in% "X"]
-#Scale the other variables before doing kmeans clustering
+#Scale the other variables before doing k-means clustering
 social_mark_quant_scaled <- scale(social_mark_quant)
-#Run kmeans, finding 10 clusters which we thought was a reasonably number of market segments to examine
+#Run k-means, finding 10 clusters which we thought was a reasonably number of market segments to examine
 social_mark_clusters <- kmeans(social_mark_quant_scaled, centers=10, nstart=50)
 #Add each row's assigned cluster back to the original data frame
 social_mark$cluster <- social_mark_clusters$cluster
@@ -353,8 +475,13 @@ mkt_segments <- mkt_segments %>%
   slice(1:10)
 ```
 
+```{r}
+mkt_segments
+```
+
 While NutrientH20 might be interested in all 10 of the market segments that we've identified, they'll likely care the most about the segments that would be most receptive to their products. Thus, we found the 3 market segments with the highest average scores for the "health_nutrition" interest given that NutrientH20 seems to be a health-oriented company. The summaries of the three segments are below:
 
+*Figure 1*
 ```{r,echo=FALSE}
 #Extract only the scores for the health_nutrition interest
 health_scores <- subset(mkt_segments, mkt_segments$variable=="health_nutrition")
@@ -367,13 +494,32 @@ top_health_clusters <- subset(mkt_segments, Group.1 %in%
 top_health_clusters$Group.1)
 colnames(top_health_clusters) = c("Market Segment","Interest Category","Average Score")
 top_health_clusters <- as.data.frame(top_health_clusters)
-top_health_clusters
+segment1 = subset(top_health_clusters,top_health_clusters$`Market Segment`=="1")
+segment3 = subset(top_health_clusters,top_health_clusters$`Market Segment`=="3")
+segment4 = subset(top_health_clusters,top_health_clusters$`Market Segment`=="4")
+kable(segment1)
 ```
 
-From the three most promising market segments, the first one appears to be the most appealing to NutrientH20. Members of this segment have by far the highest average scores for the "health_nutrition" interst category, and also have high average scores for "fitness" which probably is something closely related to what NutrientH20 does as well. There are 768 Twitter users in the most promising market segment of segment 1, and then 475 and 49 in segments 3 and 4, respectively. Focusing in on these market segment will hopefully yield more future customers than trying to market to all Twitter followers.
+*Figure 2*
+```{r,echo=FALSE}
+kable(segment3)
+```
 
-<<<<<<< HEAD
-=======
+*Figure 3*
+```{r,echo=FALSE}
+kable(segment4)
+```
+
+From the three most promising market segments (highest scores for "health-nutrition"), the first one appears to be the most appealing to NutrientH20. Members of this segment have by far the highest average scores for the "health_nutrition" interest category, and also have high average scores for "fitness" which probably is something closely related to what NutrientH20 does as well. There are 768 Twitter users in the most promising market segment of segment 1, and then 475 and 49 in segments 3 and 4, respectively. Focusing in on these market segments will hopefully yield more future customers than trying to market to all Twitter followers.
+
+*Figure 4*
+```{r,echo=FALSE}
+cluster_table <- as.data.frame(table(social_mark$cluster))
+colnames(cluster_table) <- c("Cluster","Number of Twitter Users")
+kable(cluster_table)
+```
+
+
 # The Reuters Corpus
 
 **Figure out how to download this data**
@@ -385,7 +531,7 @@ From the three most promising market segments, the first one appears to be the m
 
 # Association Rule Mining
 
-```{r}
+```{r,include=FALSE}
 library(arules)
 library(reshape2)
 #Read in the groceries.txt file. Find max number of objects
@@ -408,47 +554,57 @@ groceries <- split(x=groceries$value, f=groceries$customer)
 #Make sure each customer is only associated with unique
 #products in their basket
 groceries <- lapply(groceries, unique)
-```
-
-```{r,include=FALSE}
 #Change our data into a "transactions" type variable so that we can supply it to the apriori() function
 groceries_trans <- as(groceries,"transactions")
 #Run the apriori function with values for support, confidence, and maxlen that we played around with until we got a set of rules that we thought were reasonably useful
 groceries_rules <- apriori(groceries_trans, 
-	parameter=list(support=.01, confidence=.4, maxlen=4))
+	parameter=list(support=.005, confidence=.4, maxlen=4))
 ```
 
-```{r}
+We decided to make a set of association rules for the groceries data that had a support of at least 0.005, a confidence of at least 0.4, and a maximum length of 4. We felt as though rules conforming to these thresholds were reasonably common enough (in 0.5% of all baskets) to not just be flukes and had high enough conditional probabilities to potentially be actionable. We also capped the maximum length to be 4 to avoid any long chains of items in our association rules that would lack interpretability.
+
+Once these association rules were developed, we wanted to visualize the top 10 rules in terms of lift. What's immediately apparent in the plot below is there are three right hand side items: tropical fruit, root vegetables, and yogurt. Among these three items, root vegetables have 6/10 of the top 10 rules. This isn't all that helpful as these 6 rules could help us sell more root vegetables, but it also could be the case that lots of people buy root vegetables in general which is why it appears in so many of these top lift rules. Additionally, the maximum lift was only about 4.08 which isn't very large especially compared to our playlist analysis in class.
+
+*Figure 1*
+```{r,echo=FALSE}
 library(arulesViz)
 interesting_rules <- head(sort(groceries_rules, by="lift"), 10)
 plot(interesting_rules, method="grouped")
 ```
 
-```{r}
-itemFrequencyPlot(items(groceries_rules),population=groceries_trans,topN=10,popCol="red")
+To check the overall popularity of the three right hand side items above, we created the plot below of the top 10 items across all of our association rules. Whole milk (80%) and other vegetables (45%) are the most common items in our association rules as shown by the bars. The red line shows the overall frequency of the items across all shopping baskets. The three right hand side items from above (tropical fruit, root vegetables, and yogurt) all appeared slightly more frequently in our association rules than they did in overall market basket transactions. This plot also reveals that outside of the top 10 lift association rules, whole milk dominates the association rules as it appears in more than 80% of them.
+
+*Figure 2* - **Relative Frequency of Top 10 Items in Association Rules**
+
+```{r,echo=FALSE}
+itemFrequencyPlot(items(groceries_rules),population=groceries_trans,topN=10,popCol="red",xlab="Item",ylab="Relative Frequency")
 ```
 
-
-```{r}
+```{r,include=FALSE}
 whole_milk_rules <- apriori(groceries_trans, 
-	parameter=list(support=.01, confidence=.4, maxlen=4),appearance = list(default="lhs", rhs="whole milk"))
+	parameter=list(support=.005, confidence=.4, maxlen=4),appearance = list(default="lhs", rhs="whole milk"))
 length(whole_milk_rules)/length(groceries_rules)
 ```
 
+After some further analysis, we found that whole milk appears on the right in about $\approx$ 63% of these association rules. This is likely because of milk's relatively high prevalence in all market baskets. Furthermore, more accurately predicting who will buy milk isn't all that useful given that milk is a low cost staple item unlikely to greatly enhance a store's revenue with higher sales.
 
-```{r}
+The last step of our analysis was to import this data into Gephi to try and visualize any patterns between items that we missed via the plots above.
+
+```{r,include=FALSE}
 #Export to a graphml file so that we can visualize this data in Gephi
 library(igraph)
 groceries_graph = associations2igraph(subset(groceries_rules, lift>1), associationsAsNodes = FALSE)
 igraph::write_graph(groceries_graph, file='groceries.graphml', format = "graphml")
 ```
 
+In the figure below, we created a network plot that visualizes the relationships between the various items in our association rules with items with a higher degree (i.e. more connections) in larger font. We also used the modularity feature to group the items into two groups, although the groups themselves aren't that interesting. It seems as though the red group is items that are associated with milk, and the green group is items that are associated with other vegetables. We saw in Figure 2 that whole milk and other vegetables appeared the most frequently in our association rules and unsurprisingly, we find them at the center of this network plot in the largest font.
 
-=======
-#Export to a graphml file so that we can visualize this data in Gephi
-library(igraph)
-library(arulesViz)
-groceries_graph = associations2igraph(subset(groceries_rules, lift>1), associationsAsNodes = FALSE)
-igraph::write_graph(groceries_graph, file='groceries.graphml', format = "graphml")
-```
->>>>>>> 243a1b6b2111a88510e69fdd65cfde561c881fbc
+*Figure 3* - **Network Plot of Association Rules Colored by Modularity**
+
+![alt](Assoc Rules 1.png)
+
+We then decided to look more in depth at yogurt because it was one of the top right hand side items in Figure 1. We felt like the connections in Figure 4 below for yogurt made sense which validated our network plot. Yogurt appears in association rules alongside other dairy products such as: whipped/sour cream, cream cheese, and curds. This seems logical since these items are likely placed in the same area so shoppers are tempted to buy them together in greater frequencies. Furthermore, yogurt also appeared in association rules with whole milk and produce because these were very commonly bought items overall.
+
+*Figure 4* - **Network Plot Connections of Yogurt**
+
+![alt](Assoc Rules 2.png)
