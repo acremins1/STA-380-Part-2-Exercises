@@ -1,13 +1,30 @@
-Question: <br>
-Reuters is a big news firm. They employ a broad range of writers writing about a variety of topics. <br>
-We were curious about what topics Reuters focuses on and want to uncover the relationships between the topics covered by Reuters. <br>
+# Question
+Reuters is a London based news agency providing business, financial, national, and international news to professionals. <br>
+They employ a broad range of writers writing about their specific areas of expertise. We want to identify and uncover the relationships between the topics covered by Reuters and any blindspots that could be explored to increase revenue in the future.<br>
 
-Approach:<br>
-To visualize the relationships between the topics we wanted to leverage associate rule mining. To acheive this we did the following:<br>
-For each author, we read in all fifty documents. We then combined these documents into a big list. This list is then tokenised so that we can remove the stop words and get frequency counts for the words in the list.
-We then use the frequency counts to find the top 50 words used by each author.
+# Approach
+To visualize the relationships between the topics, we wanted to leverage associate rule mining. To acheive this we did the following:<br>
+For each author, we read in all fifty documents. The documents for each author are then concantenated into a list. This list is then tokenised so that we can remove the stop words and get frequency counts for the words in the list.
+We then use the frequency counts to find the top 25 words used by each author.
 Using these frequency counts we make a dataframe of all these words in the format (author, word) and use it for associate rule mining.
-The associate rule mining code is similar to the one used in class.
+The associate rule mining code is similar to the example demonstrated in class.
+We used Gephi to organize and visualize the nodes and edges of the network obtained.<br>
+
+# Results
+The results of the associate rule mining are shown in the image below.
+
+### Full network
+Below is the full network.  The nodes are the topics (most frequently used words) and edges are frequencies of them appearing together in our dataset. 
+![Full network](full_network.png)
+
+![Market](market.png)
+![United States](united_states.png)
+![china](china.png)
+Conclusion:
+
+
+
+
 
 Results:
 
@@ -43,7 +60,7 @@ for (i in 1:length(authors)) {
     unnest_tokens(word, text) %>%
     anti_join(stop_words) %>%
     count(word, sort = TRUE) %>%
-    head(50)
+    head(25)
 }
 
 # Create a data frame with two columns: author and word
