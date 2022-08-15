@@ -1,0 +1,125 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+For our portfolio we selected five ETF's.
+
+- ARKK (ARK Innovation) is a fund that invests in companies that are involved in the development of new technologies. (RISKY)
+- QQQ (Invesco QQQ Trust) is a ETF with primarily US tech companies. (RISKY)
+- IWM (iShares Russell 2000 ETF) is a ETF with primarily US small cap companies. (MODERATELY RISKY)
+- SPY (SPDR S&P 500 ETF Trust) is a ETF with primarily US large cap companies. (MODERATELY RISKY)
+- GLD (SPDR Gold Trust) is a ETF with primarily gold. (SAFE)
+
+We tried to make three portfolios:
+
+1. Higher weights in risky ETFs (0.4 ARKK, 0.2 QQQ, 0.15 IWM, 0.15 SPY, 0.1 GLD)
+2. Equally weighted in all ETFs (0.2 ARKK, 0.2 QQQ, 0.2 IWM, 0.2 SPY, 0.2 GLD)
+3. Lower weights in risky ETFs (0.1 ARKK, 0.2 QQQ, 0.2 IWM, 0.2 SPY, 0.3 GLD)
+
+
+Theoretically portfolio (1) should have the highest VAR, followed by (2) and (3).
+For our simulations we used 5000 iterations for each portfolio and daily data from 2017-2022.
+We performed daily rebalancing in all simulations and have reported our VARs at the 95% confidence interval.
+
+Results:
+```{r, echo=FALSE}
+library(mosaic)
+library(quantmod)
+library(foreach)
+
+set.seed(1)
+
+# Get our Data --------------------------------------------------------#
+mystocks <- c("ARKK", "QQQ", "IWM", "SPY", "GLD")
+
+myprices <- getSymbols(mystocks, from = "2017-01-01", end = "2022-01-01")
+
+for (ticker in mystocks) {
+    expr <- paste0(ticker, "a = adjustOHLC(", ticker, ")")
+    eval(parse(text = expr))
+}
+
+# Combine all the returns in a matrix
+all_returns <- cbind(ClCl(ARKKa), ClCl(QQQa), ClCl(IWMa), ClCl(SPYa), ClCl(GLDa))
+all_returns <- as.matrix(na.omit(all_returns))
+# ---------------------------------------------------------------------#
+
+# SIMULATION FUNCTION ------------------------------------------------#
+# Make a function to simulate the returns with weight as input
+simulate <- function(weights, n_days, initial_wealth, all_returns) {
+    sim1 <- foreach(i = 1:5000, .combine = "rbind") %do% {
+        total_wealth <- initial_wealth
+        holdings <- weights * total_wealth
+        wealthtracker <- rep(0, n_days)
+        for (today in 1:n_days) {
+            return_today <- resample(all_returns, 1, orig.ids = FALSE)
+            holdings <- holdings + holdings * return_today
+            total_wealth <- sum(holdings)
+            wealthtracker[today] <- total_wealth
+            # Rebalance the portfolio using weights
+            holdings <- weights * total_wealth
+
+        }
+        wealthtracker
+    }
+    return(sim1)
+}
+# ---------------------------------------------------------------------#
+
+
+# RUN SIMULATION -----------------------------------------------------#
+n_days <- 20
+initial_wealth <- 100000
+
+# Simulation 1: Risky weighted more -----------------------#
+weights <- c(0.4, 0.2, 0.15, 0.15, 0.1)
+sim2 <- simulate(weights, n_days, initial_wealth, all_returns)
+# plot normalized histogram
+hist(sim2[, n_days] - initial_wealth, breaks = 30, main = "Risky Portfolio", xlab = "Profit / Loss", ylab = "Frequency") # nolint
+
+# # 5% value at risk:
+percentage_at_risk <- quantile(sim2[, n_days] - initial_wealth, prob = 0.05) / initial_wealth #nolint
+value_at_risk <- quantile(sim2[, n_days] - initial_wealth, prob = 0.05)
+print(paste("The value at risk for 4-weeks of the risky portfolio is ", round(value_at_risk, 2), "USD (", round(percentage_at_risk, 4) * 100, "%)")) #nolint
+# Mean return:
+mean_return <- mean(sim2[, n_days] - initial_wealth) / initial_wealth * 100
+print(paste("The mean return for 4-weeks of the risky portfolio is ", round(mean_return, 4), "%")) #nolint
+
+
+# Simulation 2: Equally weighted portfolio -----------------#
+weights <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+sim1 <- simulate(weights, n_days, initial_wealth, all_returns)
+hist(sim1[, n_days] - initial_wealth, breaks = 30, main = "Equally Weighted Portfolio", xlab = "Profit / Loss", ylab = "Frequency") # nolint
+
+# # 5% value at risk:
+percentage_at_risk <- quantile(sim1[, n_days] - initial_wealth, prob = 0.05) / initial_wealth #nolint
+value_at_risk <- quantile(sim1[, n_days] - initial_wealth, prob = 0.05)
+print(paste("The value at risk for 4-weeks of the equally weighted portfolio is ", round(value_at_risk, 2), "USD (", round(percentage_at_risk, 4) * 100, "%)")) #nolint
+# Mean return:
+mean_return <- mean(sim1[, n_days] - initial_wealth) / initial_wealth * 100
+print(paste("The mean return for 4-weeks of the equally weighted portfolio is ", round(mean_return, 4), "%")) #nolint
+
+
+# Simulation 3: Safe portfolio ----------------------------#
+weights <- c(0.1, 0.15, 0.15, 0.2, 0.4)
+sim3 <- simulate(weights, n_days, initial_wealth, all_returns)
+# Plot histogram with title and axis labels
+hist(sim3[, n_days] - initial_wealth, breaks = 30, main = "Safe Portfolio", xlab = "Profit / Loss", ylab = "Frequency") # nolint
+
+# # 5% value at risk:
+percentage_at_risk <- quantile(sim3[, n_days] - initial_wealth, prob = 0.05) / initial_wealth #nolint
+value_at_risk <- quantile(sim3[, n_days] - initial_wealth, prob = 0.05)
+print(paste("The value at risk for 4-weeks of the safe portfolio is ", round(value_at_risk, 2), "USD (", round(percentage_at_risk, 4) * 100, "%)")) #nolint
+# Mean return:
+mean_return <- mean(sim3[, n_days] - initial_wealth) / initial_wealth * 100
+print(paste("The mean return for 4-weeks of the safe portfolio is ", round(mean_return, 4), "%")) #nolint
+# ---------------------------------------------------------------------#
+```
+
+Comments:
+As expected the Risky Portfolio has the highest value at risk 10.37%, followed by the Equally Weighted portfolio at 8.21%.<br>
+Finally the Safe Portfolio has the lowest value at risk at 6.18%.<br>
+We expected the portfolios with the highest VARs to have the highest returns as well (Risk-Return trade off).
+This does hold true in our simulations with the 14-day mean returns being 1.6022%, 1.2601%, and 1.1514% for the Risky Portfolio, Equally Weighted Portfolio, and the Safe Portfolio respectively.<br>
+<br>
