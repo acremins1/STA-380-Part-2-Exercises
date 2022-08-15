@@ -7,6 +7,8 @@ Aidan Cremins, Peyton Lewis, Joe Morris, Amrit Sandhu
 library(dplyr)
 ```
 
+    ## Warning: package 'dplyr' was built under R version 4.1.3
+
     ## 
     ## Attaching package: 'dplyr'
 
@@ -20,7 +22,14 @@ library(dplyr)
 
 ``` r
 library(ggplot2)
+```
+
+    ## Warning: package 'ggplot2' was built under R version 4.1.3
+
+``` r
 library(forcats)
+library(reshape2)
+library(knitr)
 ```
 
 # Probability Practice
@@ -29,6 +38,10 @@ library(forcats)
 
 P(Y) = 0.65 P(N) = 0.35 P(RC) = 0.3 P(TC) = 0.7 (P(RC)-1) P(Y\|RC) = 0.5
 P(N\|RC) = 0.5
+
+These probabilities are summarized in the table below:
+
+![alt](Table.png)
 
 We’re looking for P(Y\|TC) so we can use the rule of total probability:
 
@@ -39,23 +52,22 @@ want to solve for that unknown.
 
 0.65 = 0.7 \* P(Y\|TC) + 0.3 \* 0.5
 
-From the above equation, we find that P(Y\|TC)
-![\approx](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Capprox "\approx")
-0.714286. This means that truthful clickers answer yes to the question
-about 71.43% of the time.
-
-![\frac{P(Y)\*P(TC\|Y)}{P(Yes)\*P(TC\|Y)+P(No)\*P(RC\|Y)}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cfrac%7BP%28Y%29%2AP%28TC%7CY%29%7D%7BP%28Yes%29%2AP%28TC%7CY%29%2BP%28No%29%2AP%28RC%7CY%29%7D "\frac{P(Y)*P(TC|Y)}{P(Yes)*P(TC|Y)+P(No)*P(RC|Y)}")
-
-![\frac{0.65\*0.5}{.7\*0.5+0.3\*0.5}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cfrac%7B0.65%2A0.5%7D%7B.7%2A0.5%2B0.3%2A0.5%7D "\frac{0.65*0.5}{.7*0.5+0.3*0.5}")
+From the above equation, we find that P(Y\|TC) ≈ 0.714286. This means
+that truthful clickers answer yes to the question about 71.43% of the
+time.
 
 ### Part b.
 
-P(Positive\|Disease) = .993 P(Negative\|No Disease) = 0.9999 P(Disease)
-= 0.000025 P(No Disease) = 0.999975 (1-0.000025)
+P(Disease) = 0.000025 P(No Disease) = 0.999975 (1-0.000025)
+P(Positive\|Disease) = .993 P(Negative\|No Disease) = 0.9999
+
+The probabilities above are summarized in the tree diagram below:
+
+![alt](tree.png)
 
 We’re looking for P(Disease\|Positive) so we can use Baye’s Law:
 
-![\frac{P(Disease)\*P(Positive\|Disease)}{P(Disease)\*P(Positive\|Disease)+P(No Disease)\*P(Positive\|No Disease)}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cfrac%7BP%28Disease%29%2AP%28Positive%7CDisease%29%7D%7BP%28Disease%29%2AP%28Positive%7CDisease%29%2BP%28No%20Disease%29%2AP%28Positive%7CNo%20Disease%29%7D "\frac{P(Disease)*P(Positive|Disease)}{P(Disease)*P(Positive|Disease)+P(No Disease)*P(Positive|No Disease)}")
+$\frac{P(Disease)\*P(Positive\|Disease)}{P(Disease)\*P(Positive\|Disease)+P(No Disease)\*P(Positive\|No Disease)}$
 
 We have almost all of the inputs that we need, however, we’re missing
 P(Positive\|No Disease). These are false positives. We can find the
@@ -63,10 +75,9 @@ missing probability by taking 1 - true negatives, or 1 - 0.9999 to get
 P(Positive\|No Disease) as 0.0001. Now we can solve for
 P(Disease\|Positive).
 
-![\frac{0.000025\*0.993}{0.000025\*0.993+0.999975\*0.0001}](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Cfrac%7B0.000025%2A0.993%7D%7B0.000025%2A0.993%2B0.999975%2A0.0001%7D "\frac{0.000025*0.993}{0.000025*0.993+0.999975*0.0001}")
-![\approx](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%5Capprox "\approx")
-.198882. Thus, if someone tests positive, they have about a 19.89%
-chance of actually having the disease.
+$\frac{0.000025\*0.993}{0.000025\*0.993+0.999975\*0.0001}$ ≈ .198882.
+Thus, if someone tests positive, they have about a 19.89% chance of
+actually having the disease.
 
 # Wrangling the Billboard Top 100
 
@@ -80,7 +91,7 @@ billboard = read.csv("data/billboard.csv")
 
 ``` r
 billboard %>%
-  group_by(performer, song) %>%
+  group_by(performer,song) %>%
   summarize(count = n()) %>%
   arrange(desc(count)) %>%
   head(10)
@@ -89,7 +100,7 @@ billboard %>%
     ## `summarise()` has grouped output by 'performer'. You can override using the
     ## `.groups` argument.
 
-    ## # A tibble: 10 × 3
+    ## # A tibble: 10 x 3
     ## # Groups:   performer [10]
     ##    performer                                 song                          count
     ##    <chr>                                     <chr>                         <int>
@@ -101,7 +112,7 @@ billboard %>%
     ##  6 LMFAO Featuring Lauren Bennett & GoonRock Party Rock Anthem                68
     ##  7 OneRepublic                               Counting Stars                   68
     ##  8 Adele                                     Rolling In The Deep              65
-    ##  9 Jewel                                     Foolish Games/You Were Meant…    65
+    ##  9 Jewel                                     Foolish Games/You Were Meant~    65
     ## 10 Carrie Underwood                          Before He Cheats                 64
 
 ### Part b.
@@ -240,7 +251,13 @@ ggplot(wine, aes(x = cluster, y = quality)) + geom_boxplot()
 
 ![](STA-380-Part-2-Exercises_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
+\<\<\<\<\<\<\< HEAD
+
+# \#Market Segmentation
+
 # Market Segmentation
+
+> > > > > > > 243a1b6b2111a88510e69fdd65cfde561c881fbc
 
 We decided to define market segments for this problem as clusters
 identified through the k-means clustering approach. We omitted the
@@ -300,17 +317,22 @@ then 475 and 49 in segments 3 and 4, respectively. Focusing in on these
 market segment will hopefully yield more future customers than trying to
 market to all Twitter followers.
 
+# \<\<\<\<\<\<\< HEAD
+
 # The Reuters Corpus
 
 **Figure out how to download this data** - For now, just clone the
 Github and copy the folder over; I’ve added it to .gitignore so it won’t
 be pushed to Github
 
-# Association Rule Mining
+> > > > > > > 243a1b6b2111a88510e69fdd65cfde561c881fbc \# Association
+> > > > > > > Rule Mining
 
 ``` r
 library(arules)
 ```
+
+    ## Warning: package 'arules' was built under R version 4.1.3
 
     ## Loading required package: Matrix
 
@@ -330,6 +352,8 @@ library(reshape2)
 #Read in the groceries.txt file. Find max number of objects
 #in a basket so that R doesn't automatically cap the number
 #of columns we can have
+no_col <- max(count.fields("groceries.txt", sep = ","))
+groceries <- read.table("groceries.txt",sep=",",fill=TRUE,col.names=c(1:no_col))
 no_col <- max(count.fields("data/groceries.txt", sep = ","))
 groceries <- read.table("data/groceries.txt",sep=",",fill=TRUE,col.names=c(1:no_col))
 #Add in a column that indicates which customer corresponds to 
@@ -348,9 +372,69 @@ groceries <- lapply(groceries, unique)
 ```
 
 ``` r
+library(arulesViz)
+```
+
+    ## Warning: package 'arulesViz' was built under R version 4.1.3
+
+``` r
+interesting_rules <- head(sort(groceries_rules, by="lift"), 10)
+plot(interesting_rules, method="grouped")
+```
+
+![](STA-380-Part-2-Exercises_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+
+``` r
+itemFrequencyPlot(items(groceries_rules),population=groceries_trans,topN=10,popCol="red")
+```
+
+![](STA-380-Part-2-Exercises_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+
+``` r
+whole_milk_rules <- apriori(groceries_trans, 
+    parameter=list(support=.01, confidence=.4, maxlen=4),appearance = list(default="lhs", rhs="whole milk"))
+```
+
+    ## Apriori
+    ## 
+    ## Parameter specification:
+    ##  confidence minval smax arem  aval originalSupport maxtime support minlen
+    ##         0.4    0.1    1 none FALSE            TRUE       5    0.01      1
+    ##  maxlen target  ext
+    ##       4  rules TRUE
+    ## 
+    ## Algorithmic control:
+    ##  filter tree heap memopt load sort verbose
+    ##     0.1 TRUE TRUE  FALSE TRUE    2    TRUE
+    ## 
+    ## Absolute minimum support count: 98 
+    ## 
+    ## set item appearances ...[1 item(s)] done [0.00s].
+    ## set transactions ...[169 item(s), 9835 transaction(s)] done [0.00s].
+    ## sorting and recoding items ... [88 item(s)] done [0.00s].
+    ## creating transaction tree ... done [0.01s].
+    ## checking subsets of size 1 2 3 4
+
+    ## Warning in apriori(groceries_trans, parameter = list(support = 0.01, confidence
+    ## = 0.4, : Mining stopped (maxlen reached). Only patterns up to a length of 4
+    ## returned!
+
+    ##  done [0.00s].
+    ## writing ... [43 rule(s)] done [0.00s].
+    ## creating S4 object  ... done [0.00s].
+
+``` r
+length(whole_milk_rules)/length(groceries_rules)
+```
+
+    ## [1] 0.6935484
+
+``` r
 #Export to a graphml file so that we can visualize this data in Gephi
 library(igraph)
 ```
+
+    ## Warning: package 'igraph' was built under R version 4.1.2
 
     ## 
     ## Attaching package: 'igraph'
@@ -372,7 +456,13 @@ library(igraph)
     ##     union
 
 ``` r
-library(arulesViz)
 groceries_graph = associations2igraph(subset(groceries_rules, lift>1), associationsAsNodes = FALSE)
 igraph::write_graph(groceries_graph, file='groceries.graphml', format = "graphml")
 ```
+
+======= \#Export to a graphml file so that we can visualize this data in
+Gephi library(igraph) library(arulesViz) groceries_graph =
+associations2igraph(subset(groceries_rules, lift\>1),
+associationsAsNodes = FALSE) igraph::write_graph(groceries_graph,
+file=‘groceries.graphml’, format = “graphml”) \`\`\` \>\>\>\>\>\>\>
+243a1b6b2111a88510e69fdd65cfde561c881fbc
